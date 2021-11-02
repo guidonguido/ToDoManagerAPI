@@ -160,8 +160,6 @@ paths:
         404:
           description: Not found
           content: {}
-      security:
-      - bearerAuth: []
   /tasks:
     get:
       tags:
