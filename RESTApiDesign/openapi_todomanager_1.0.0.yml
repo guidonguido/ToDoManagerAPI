@@ -1,0 +1,493 @@
+openapi: 3.0.1
+info:
+  title: ToDo Manager
+  description: 'DSP-Lab-1'
+  contact:
+    email: ricioppo.guido@gmail.com
+  license:
+    name: GPL 2.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
+  version: 1.0.0
+externalDocs:
+  description: More about DSP
+  url: https://didattica.polito.it/pls/portal30/gap.pkg_guide.viewGap?p_cod_ins=01TXZOV&p_a_acc=2021&p_header=S&p_lang=IT
+servers:
+- url: https://todomanager.dsp.io/v1
+- url: http://todomanager.dsp.io/v1
+tags:
+- name: task
+  description: Task resource
+- name: tasks
+  description: List of Task resource
+- name: assignees
+  description: List of User resource assigned to a task 
+  
+  
+
+
+components:
+  schemas:
+    Project:
+      type: string
+      enum: ["Personal", "WA1_Project", "WA2_Project", "DSP_Project"]
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: unique identifier for the task
+        description:
+          type: string
+          maxLength: 160
+        important:
+          type: boolean
+          default: false
+        private:
+          type: boolean
+          default: true
+          description: True if only the user who created it can get information about
+            it, False if every user can get information about it
+        project:
+          "$ref": "#/components/schemas/Project"
+        deadline:
+          type: string
+          format: date-time
+          pattern: "^(2[1-9][0-9]{2}|20[2-9][0-9]|[3-9][0-9]{3})"
+        completed:
+          type: boolean
+          default: false
+        owner:
+          type: string
+          format: uri
+        assignedTo:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+      required:
+      - id
+      - description
+    Tasks:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        pageNumber:
+          type: integer
+        pageItems:
+          type: array
+          items: 
+            "$ref": "#/components/schemas/Task"
+        next:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: idn-email
+        password:
+          type: string
+          minLength: 6
+          maxLength: 20
+        self:
+          type: string
+          format: uri
+      required:
+        - id
+        - email
+    Users:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        pageNumber:
+          type: integer
+        pageItems:
+          type: array
+          items: 
+            "$ref": "#/components/schemas/User"
+        next:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /tasks/public:
+    get:
+      tags:
+      - tasks
+      summary: Get all public tasks
+      operationId: getAllPublicTasks
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of tasks list
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tasks"
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+  /tasks:
+    get:
+      tags:
+      - tasks
+      summary: Get all tasks. Either owner's private tasks or public
+      description: Personalizing "private" and "type" query params, client decides to get all public tasks or only owned ones, providing identification
+      operationId: getAllTasks
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of tasks list
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: type
+        in: query
+        description: If authenticated, filter type of tasks willing to retrieve
+        required: false
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            default: all
+            enum:
+            - assigned
+            - owned
+            - all
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tasks"
+        401:
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - tasks
+      summary: Create a task
+      operationId: createTask
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags:
+      - task
+      summary: Find task by ID
+      description: Returns a single task
+      operationId: getTaskById
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - task
+      summary: Updates a task
+      operationId: updateTask
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+        204:
+          description: No content
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - task
+      summary: Deletes a task
+      operationId: deleteTask
+      responses:
+        204:
+          description: No content
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+    patch:
+      tags:
+      - task
+      summary: Updates "completed" field of a task
+      operationId: updateCompletedTask
+      responses:
+        204:
+          description: No content
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+  /tasks/{id}/assignees:
+    parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags:
+      - assignees
+      summary: Get task assignees list
+      operationId: getTaskAssignees
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - assignees
+      summary: Assign task to an existing user
+      operationId: addTaskAssignee
+      requestBody:
+        description: ID of an existing user
+        required: true
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+  /tasks/{taskId}/assignees/{userId}:
+    parameters:
+      - name: taskId
+        in: path
+        description: ID of a task
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: userId
+        in: path
+        description: ID of an user
+        required: true
+        schema:
+          type: integer
+          format: int64
+    delete:
+      tags:
+      - assignees
+      summary: Remove task assignment from a user
+      operationId: removeTaskAssignee
+      responses:
+        204:
+          description: No content
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
+      security:
+      - bearerAuth: []
+  /login:
+    post:
+      tags:
+        - authentication
+      summary: Logs a user in
+      description: User must send email and password, according to User schema
+      operationId: authenticateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        204:
+          description: No Content
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=jwtToken; Path=/; HttpOnly
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+  /logout:
+    post:
+      tags:
+        - authentication
+      summary: Logs a user in
+      description: User must send userId
+      operationId: logoutUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        204:
+          description: No Content
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=jwtToken; Path=/; HttpOnly
+        400:
+          description: Bad Request
+          content: 
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+
+
+
