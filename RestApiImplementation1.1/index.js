@@ -1,40 +1,23 @@
 'use strict';
 
-const LocalStrategy = require('passport-local').Strategy; // username and password for login
-
 var path = require('path');
 var http = require('http');
 
 var oas3Tools = require('oas3-tools');
 var serverPort = 8080;
 
-
-/*** Set up Passport ***/
-// set up the "username and password" login strategy
-// by setting a function to verify username and password
-passport.use(new LocalStrategy(
-    function (username, password, done) {
-      userDao.getUser(username, password).then((user) => {
-        if (!user)
-          return done(null, false, { message: 'Incorrect username and/or password.' });
-  
-        return done(null, user);
-      })
-    }
-  ));
-
 // swaggerRouter configuration
 var options = {
     routing: {
         controllers: path.join(__dirname, './controllers')
-    }
-}; 
+    },
+};
 
-var expressAppConfig = oas3Tools.expressAppConfig("./api/openapi.yaml", options);
+var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api/openapi.yaml'), options);
 var app = expressAppConfig.getApp();
 
-
-/**var tasksController = require('./controllers/Tasks');
+/**
+var tasksController = require('./controllers/Tasks');
 var taskController = require('./controllers/Task');
 var assigneesController = require(path.join(__dirname,"controllers/Assignees"));
 var authenticationController = require(path.join(__dirname,"controllers/Authentication"));
@@ -55,11 +38,6 @@ app.delete('/tasks/:taskId/assignees/:userId', assigneesController.removeTaskAss
 app.post('/login', authenticationController.authenticateUser); // TODO Validate body
 app.post('/logout', authenticationController.logoutUser); // TODO Validate body
 */
-
-
-
-
-
 
 // Initialize the Swagger middleware
 http.createServer(app).listen(serverPort, function () {

@@ -14,6 +14,7 @@ externalDocs:
 servers:
 - url: https://todomanager.dsp.io/v1
 - url: http://todomanager.dsp.io/v1
+- url: http://localhost:8080/
 tags:
 - name: task
   description: Task resource
@@ -21,7 +22,10 @@ tags:
   description: List of Task resource
 - name: assignees
   description: List of User resource assigned to a task 
-  
+- name: users
+  description: Users resource
+- name: user
+  description: User resource
   
 
 
@@ -93,7 +97,7 @@ components:
           type: string
         email:
           type: string
-          format: idn-email
+          format: email
         password:
           type: string
           minLength: 6
@@ -126,8 +130,13 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    cookieAuth:
+      description: JWT identifying user session
+      type: apiKey
+      in: cookie
+      name: JWT.token
 paths:
-  /tasks/public:
+  /api/tasks/public:
     get:
       tags:
       - tasks
@@ -159,7 +168,7 @@ paths:
         404:
           description: Not found
           content: {}
-  /tasks:
+  /api/tasks:
     get:
       tags:
       - tasks
@@ -199,7 +208,7 @@ paths:
         401:
           description: Unauthorized
       security:
-      - bearerAuth: []
+          - cookieAuth: []
     post:
       tags:
       - tasks
@@ -230,8 +239,8 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
-  /tasks/{id}:
+      - cookieAuth: []
+  /api/tasks/{id}:
     parameters:
       - name: id
         in: path
@@ -264,7 +273,7 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
+      - cookieAuth: []
     put:
       tags:
       - task
@@ -293,7 +302,7 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
+      - cookieAuth: []
     delete:
       tags:
       - task
@@ -310,7 +319,7 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
+      - cookieAuth: []
     patch:
       tags:
       - task
@@ -329,8 +338,8 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
-  /tasks/{id}/assignees:
+      - cookieAuth: []
+  /api/tasks/{id}/assignees:
     parameters:
       - name: id
         in: path
@@ -359,7 +368,7 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
+      - cookieAuth: []
     post:
       tags:
       - assignees
@@ -395,8 +404,8 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
-  /tasks/{taskId}/assignees/{userId}:
+      - cookieAuth: []
+  /api/tasks/{taskId}/assignees/{userId}:
     parameters:
       - name: taskId
         in: path
@@ -428,8 +437,8 @@ paths:
           description: Not found
           content: {}
       security:
-      - bearerAuth: []
-  /login:
+      - cookieAuth: []
+  /api/signin:
     post:
       tags:
         - authentication
@@ -457,7 +466,7 @@ paths:
               schema:
                 type: string
                 description: The reason for the bad request
-  /logout:
+  /api/logout:
     post:
       tags:
         - authentication
@@ -485,6 +494,63 @@ paths:
               schema:
                 type: string
                 description: The reason for the bad request
+  /api/users:
+    get:
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      summary: Get information about the users
+      description: >-
+        Retrieve the available information (passwords excluded) about all the
+        users.
+      operationId: getAllUsers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        401:
+          description: Unauthorized
+        404:
+          description: Not Found
+          content: {}
+  /api/users/{userId}:
+    get:
+      tags:
+        - user
+      security:
+        - cookieAuth: []
+      summary: Get information about a user
+      description: Get user resource (password excluded) identified by userId
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user to get
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        401:
+          description: Unauthorized
+        403: 
+          description: Forbidden
+        404:
+          description: Not found
+          content: {}
 
 
 

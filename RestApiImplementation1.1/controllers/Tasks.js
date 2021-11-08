@@ -14,10 +14,8 @@ module.exports.createTask = function createTask (req, res, next, body) {
 };
 
 module.exports.getAllPublicTasks = function getAllPublicTasks (req, res, next, pageNumber) {
-  console.log("getAllPublicTasks controller")
   Tasks.getAllPublicTasks(pageNumber)
     .then(function (response) {
-      console.log(response)
       utils.writeJson(res, response);
     })
     .catch(function (response) {
