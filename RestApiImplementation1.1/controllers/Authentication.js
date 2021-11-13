@@ -2,41 +2,66 @@
 
 var utils = require('../utils/writer.js');
 var Authentication = require('../service/AuthenticationService');
+var User = require("../service/UserService");
+const bcrypt = require('bcrypt')
+const jsonwebtoken = require('jsonwebtoken')
+const passport = require('passport'); // auth middleware
+const LocalStrategy = require('passport-local').Strategy; // username and password for login
+
+// Login params
+var jwtSecret = 'uA2EoqHgylP9LAFNK1uXCb-YS7cmBtBxW8oxJzc1Y32QsYtR7ecgxdTRW6nR9zME';
+const expireTime = 1200; //seconds
 
 
 
-module.exports.authenticateUser = function authenticateUser (req, res, next, body) {
-  Authentication.authenticateUser(body)
-    .then(function (response) {
-      if( response === "INV.EMAIL")
-        utils.writeJson(res, {errors: [{ 'param': 'Server', 'msg': 'Invalid e-mail' }],}, 404);
-      if( response === "WRONG.PSW")
-        utils.writeJson(res, {errors: [{ 'param': 'Server', 'msg': 'Wrong password' }],}, 401);
-      else{
-        const token = response.token;
-        const expireTime = response.expireTime;
-        const userId = response.userId;
-        const userName = response.userName;
-        
-        res.cookie('token', token, { httpOnly: true, sameSite: true, maxAge: 1000 * expireTime });
-        res.json({ id: userId, name: userName });
-      }
-    })
-    .catch(function (err) {
-      new Promise((resolve) => { setTimeout(resolve, 1000) })
-      .then(() => {
-        res.status(401).json(authErrorObj)
-      })
+/*** Set up Passport ***/
+// set up the "username and password" login strategy
+// by setting a function to verify username and password
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+  },
+  function (email, password, done) {
+    User.getUserByEmail(email)
+      .then((user) => {
+        console.log("Login user found", user, password);
+        if (!user)
+          return done(null, false, { message: 'Invalid email' });
+
+        if( bcrypt.compareSync(password, user.hash ) ){
+          return done(null, user, true)
+        }
+        else{
+          new Promise((resolve) => { setTimeout(resolve, 1000) }).then(() =>  { 
+            console.log("Wrong psw")
+            return done(null, false, { message: 'Wrong password' }) })
+        }
+    }).catch(err => done(err));
+  }   
+));
+
+module.exports.authenticateUser = function authenticateUser (req, res, next) {
+  passport.authenticate('local', {session: false},  (err, user, info) => {
+    if (err)
+        return next(err);
+    if (!user) {
+        // display wrong login messages
+        return res.status(401).json(info);
+    }
+    // if success, perform the login
+    req.login(user, {session: false}, (err) => {
+      if (err)
+        return next(err);
+
+      const token = jsonwebtoken.sign({ user: user.id }, jwtSecret, { expiresIn: '20m' });
+      res.cookie('JWT.token', token, { httpOnly: true, sameSite: true, maxAge: 1000 * expireTime });
+      return res.json({ id: user.id, name: user.name });
     });
+  })(req, res, next);
+
 };
 
-module.exports.logoutUser = function logoutUser (req, res, next, body) {
-  res.clearCookie('token').end();
-  /*Authentication.logoutUser(body)
-    .then(function (response) {
-      utils.writeJson(res, response);
-    })
-    .catch(function (response) {
-      utils.writeJson(res, response);
-    });*/
+module.exports.logoutUser = function logoutUser (req, res) {
+  req.logout();
+  res.clearCookie('JWT.token').end();
 };

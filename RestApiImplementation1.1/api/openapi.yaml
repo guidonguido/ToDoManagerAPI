@@ -14,7 +14,6 @@ externalDocs:
 servers:
 - url: https://todomanager.dsp.io/v1
 - url: http://todomanager.dsp.io/v1
-- url: http://localhost:8080/
 tags:
 - name: task
   description: Task resource
@@ -589,6 +588,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Task'
+        totalItems:
+          type: integer
         next:
           type: string
           format: uri
@@ -624,7 +625,6 @@ components:
     User:
       required:
       - email
-      - id
       type: object
       properties:
         id:

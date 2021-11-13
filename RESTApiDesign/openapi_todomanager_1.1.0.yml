@@ -78,6 +78,8 @@ components:
           type: integer
         pageNumber:
           type: integer
+        totalItems:
+          type: integer
         pageItems:
           type: array
           items: 
