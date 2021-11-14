@@ -12,6 +12,10 @@ class User{
         var selfLink = "/api/users/" + this.id;
         this.self =  selfLink;
     }
+
+    static createUser = function(row) {
+        return new User(row.id, row.name, row.email);
+      }
 }
 
 module.exports = User;

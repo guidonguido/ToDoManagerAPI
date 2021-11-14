@@ -17,6 +17,13 @@ class Task{
         var selfLink = "/api/tasks/" + this.id;
         this.self =  selfLink;
     }
+
+    static createTask = function(row) {
+        const important = (row.important === 1) ? true : false;
+        const privateTask = (row.private === 1) ? true : false;
+        const completed = (row.completed === 1) ? true : false;
+        return new Task(row.tid, row.description, important, privateTask, row.deadline, row.project, completed);
+      }
 }
 
 module.exports = Task;

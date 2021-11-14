@@ -11,27 +11,25 @@ var constants = require('../utils/constants.js');
  * body Task  (optional)
  * returns Task
  **/
-exports.createTask = function(body) {
-  return new Promise(function(resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-  "important" : false,
-  "owner" : "http://example.com/aeiou",
-  "private" : true,
-  "description" : "description",
-  "project" : "Personal",
-  "self" : "http://example.com/aeiou",
-  "id" : 1,
-  "completed" : false,
-  "deadline" : "2000-01-23T04:56:07.000+00:00",
-  "assignedTo" : "http://example.com/aeiou"
-};
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
+exports.createTask = function(task, ownerId) {
+  const important = task.important || false;
+  const privateTask = task.private || true;
+  const project = task.project || "Personal";
+  const date = new Date();
+  const deadline = task.deadline || new Date(date.setFullYear(date.getFullYear()+1));
+  const completed = task.completed || false;
+
+  return new Promise((resolve, reject) => {
+    const sql = 'INSERT INTO tasks(description, important, private, project, deadline, completed, owner) VALUES(?,?,?,?,?,?,?)';
+    db.run(sql, [task.description, important, privateTask, project, deadline, completed, ownerId], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        var createdTask = new Task(this.lastID, task.description, important, privateTask, deadline, project, completed);
+        resolve(createdTask);
+      }
+    });
+});
 }
 
 
@@ -46,14 +44,12 @@ exports.getAllPublicTasks = function(pageNumber) {
     var sql = "SELECT t.id as tid, t.description, t.important, t.private, t.project, t.deadline,t.completed FROM tasks t WHERE  t.private = 0 "
     var limits = getPagination(pageNumber);
     if (limits.length != 0) sql = sql + " LIMIT ?,?";
-    console.log("query = ", sql)
-    console.log("limits = ", limits)
 
     db.all(sql, limits, (err, rows) => {
         if (err) {
             reject(err);
         } else {
-            let tasks = rows.map((row) => createTask(row));
+            let tasks = rows.map((row) => Task.createTask(row));
             resolve(tasks);
         }
     });
@@ -113,7 +109,7 @@ exports.getAllTasks = function(userId, type, pageNumber) {
       if (err) {
         reject(err);
       } else {
-        let tasks = rows.map((row) => createTask(row));
+        let tasks = rows.map((row) => Task.createTask(row));
         resolve(tasks);
       }
     });
@@ -163,11 +159,4 @@ const getPagination = function(pageNumber) {
   limits.push(size * (pageNumber - 1));
   limits.push(size);
   return limits;
-}
-
-const createTask = function(row) {
-  const important = (row.important === 1) ? true : false;
-  const privateTask = (row.private === 1) ? true : false;
-  const completed = (row.completed === 1) ? true : false;
-  return new Task(row.tid, row.description, important, privateTask, row.deadline, row.project, completed);
 }

@@ -69,16 +69,16 @@ app.get('/api/tasks/public', tasksController.getAllPublicTasks); // Implemented
 app.post('/api/signin', authenticationController.authenticateUser); // Implemented 
 app.post('/api/logout', authMiddleware, validate({body: userSchema}), authenticationController.logoutUser); // Implemented  
 app.get('/api/tasks', authMiddleware, tasksController.getAllTasks); // Implemented
-app.post('/api/tasks', authMiddleware, validate({body: taskSchema}), tasksController.createTask); 
-app.get('/api/tasks/:taskId', authMiddleware, taskController.getTaskById);
-app.put('/api/tasks/:taskId', authMiddleware, validate({body: taskSchema}), taskController.updateTask);
-app.patch('/api/tasks/:taskId', authMiddleware, taskController.updateCompletedTask);
-app.delete('/api/tasks/:taskId', authMiddleware, taskController.deleteTask);
-app.get('/api/tasks/:taskId/assignees', authMiddleware, assigneesController.getTaskAssignees);
-app.post('/api/tasks/:taskId/assignees', authMiddleware, validate({body: userSchema}), assigneesController.addTaskAssignee);
-app.delete('/api/tasks/:taskId/assignees/:userId', authMiddleware, assigneesController.removeTaskAssignee);
-app.get('/api/users', authMiddleware, usersController.getAllUsers);
-app.get('api/users/:userId', authMiddleware, userController.getUserById);
+app.post('/api/tasks', authMiddleware, validate({body: taskSchema}), tasksController.createTask); // Implemented
+app.get('/api/tasks/:taskId', authMiddleware, taskController.getTaskById); // Implemented
+app.put('/api/tasks/:taskId', authMiddleware, validate({body: taskSchema}), taskController.updateTask); // Implemented
+app.patch('/api/tasks/:taskId', authMiddleware, taskController.updateCompletedTask); // Implemented
+app.delete('/api/tasks/:taskId', authMiddleware, taskController.deleteTask); // Implemented
+app.get('/api/tasks/:taskId/assignees', authMiddleware, assigneesController.getTaskAssignees); // Implemented
+app.post('/api/tasks/:taskId/assignees', authMiddleware, validate({body: userSchema}), assigneesController.addTaskAssignee); // Implemented
+app.delete('/api/tasks/:taskId/assignees/:userId', authMiddleware, assigneesController.removeTaskAssignee); // Implemented
+app.get('/api/users', authMiddleware, usersController.getAllUsers); // Implemented
+app.get('/api/users/:userId', authMiddleware, userController.getUserById); // Implemented
 
 
 // Error handlers for validation and authentication errors
@@ -91,7 +91,7 @@ app.use(function(err, req, res, next) {
 
 app.use(function(err, req, res, next) {
     if (err.name === 'UnauthorizedError') {
-        var authErrorObj = { errors: [{ 'param': 'Server', 'msg': 'Authorization error' }] };
+        var authErrorObj = { errors: [{ 'param': 'Server', 'msg': 'Authorization error', 'next':"/api/signin" }] };
         res.status(401).json(authErrorObj);
     } else next(err);
 });

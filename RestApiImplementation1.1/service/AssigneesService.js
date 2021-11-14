@@ -1,5 +1,9 @@
 'use strict';
 
+const User = require("../components/user");
+const db = require('../components/db');
+var constants = require('../utils/constants.js');
+
 
 /**
  * Assign task to an existing user
@@ -8,65 +12,115 @@
  * id Long ID of a task
  * returns Task
  **/
-exports.addTaskAssignee = function(body,id) {
-  return new Promise(function(resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-  "important" : false,
-  "owner" : "http://example.com/aeiou",
-  "private" : true,
-  "description" : "description",
-  "project" : "Personal",
-  "self" : "http://example.com/aeiou",
-  "id" : 1,
-  "completed" : false,
-  "deadline" : "2000-01-23T04:56:07.000+00:00",
-  "assignedTo" : "http://example.com/aeiou"
-};
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
+exports.addTaskAssignee = function(assigneeId, taskId, userId) {
+  return new Promise((resolve, reject) => {
+    const sql1 = "SELECT owner FROM tasks t WHERE t.id = ?";
+    db.all(sql1, [taskId], (err, rows) => {
+        if (err)
+            reject(err);
+        else if (rows.length === 0)
+            reject(404);
+        else if(userId != rows[0].owner) {
+            reject(403);
+        }
+        else {
+            const sql2 = 'INSERT INTO assignments(task, user) VALUES(?,?)';
+            console.log("ass", assigneeId, "tsk", taskId)
+            db.run(sql2, [taskId, assigneeId], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(null);
+                }
+            });
+        }
+    });
   });
 }
 
 
 /**
  * Get task assignees list
- *
+ * Input: 
+ * - userId
+ * - taskId
+ * - pageNumber
  * id Long ID of a task
  * returns Users
  **/
-exports.getTaskAssignees = function(id) {
-  return new Promise(function(resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-  "next" : "http://example.com/aeiou",
-  "pageNumber" : 6,
-  "totalPages" : 0,
-  "pageItems" : [ {
-    "password" : "password",
-    "name" : "name",
-    "self" : "http://example.com/aeiou",
-    "id" : 1,
-    "email" : "email"
-  }, {
-    "password" : "password",
-    "name" : "name",
-    "self" : "http://example.com/aeiou",
-    "id" : 1,
-    "email" : "email"
-  } ],
-  "self" : "http://example.com/aeiou"
-};
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
+exports.getTaskAssignees = function(userId, taskId, pageNumber) {
+  return new Promise((resolve, reject) => {
+    // userId is owner of requested task
+    const sql = "SELECT owner FROM tasks WHERE id = ?";
+    db.all(sql, [taskId], (err, rows) => {
+        if (err)
+          reject(err);
+        else if (rows.length === 0){
+          reject(404);
+        }
+        else if(userId != rows[0].owner) {
+          reject(403);
+        } else{
+          var limits = getPagination(pageNumber);
+          var sql2 = "SELECT u.id , u.name, u.email FROM assignments a, users u WHERE a.task=? and a.user = u.id";
+          
+          if (limits.length != 0) sql2 += " LIMIT ?,?";
+          
+          limits.unshift(taskId);
+
+          console.log("sql" , sql2)
+
+          db.all(sql2, limits, (err, rows) => {
+            console.log("rows" , rows)
+
+            if (err) {
+              reject(err);
+            } else {
+              const users = rows.map((row) => User.createUser(row));
+              resolve(users);
+            }
+          });
+        }
+    })
+  })
 }
+
+/**
+ * Retrieve the number of public tasks
+ * 
+ * Input: 
+ * - userId
+ * - taskId
+ * Output:
+ * - total number of requested tasks
+ * 
+ **/
+ exports.getTaskAssigneesTotal = function(userId, taskId) {
+  return new Promise((resolve, reject) => {
+  // userId is owner of requested task
+  const sql = "SELECT owner FROM tasks WHERE id = ?";
+  db.all(sql, [taskId], (err, rows) => {
+      if (err)
+        reject(err);
+      else if (rows.length === 0){
+        reject(404);
+      }
+      else if(userId != rows[0].owner) {
+        reject(403);
+      } else{
+        const sql2 = `SELECT count(*) as total FROM assignments a WHERE a.task = ?`;
+        db.get(sql2, [taskId], (err, size) => {
+          console.log(size)
+          if (err) {
+            reject(err);
+          } else {
+            resolve(size.total);
+          }
+        });
+      }
+  });
+  }
+)}
 
 
 /**
@@ -76,9 +130,37 @@ exports.getTaskAssignees = function(id) {
  * userId Long ID of an user
  * no response value expected for this operation
  **/
-exports.removeTaskAssignee = function(taskId,userId) {
-  return new Promise(function(resolve, reject) {
-    resolve();
-  });
+exports.removeTaskAssignee = function(userId, taskId, assigneeId) {
+  return new Promise((resolve, reject) => {
+    const sql1 = "SELECT owner FROM tasks t WHERE t.id = ?";
+    db.all(sql1, [taskId], (err, rows) => {
+        if (err)
+            reject(err);
+        else if (rows.length === 0)
+            reject(404);
+        else if(userId != rows[0].owner) {
+            reject(403);
+        }
+        else {
+            const sql2 = 'DELETE FROM assignments WHERE task = ? AND user = ?';
+            db.run(sql2, [taskId, assigneeId], (err) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(null);
+            })
+        }
+    });
+})
 }
 
+const getPagination = function(pageNumber) {
+  var size = constants.OFFSET;
+  var limits = [];
+  if (pageNumber == null) {
+    pageNumber = 1;
+  }
+  limits.push(size * (pageNumber - 1));
+  limits.push(size);
+  return limits;
+}

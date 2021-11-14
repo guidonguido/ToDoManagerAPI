@@ -5,17 +5,18 @@ var constants = require('../utils/constants.js');
 var Tasks = require('../service/TasksService');
 
 module.exports.createTask = function createTask (req, res, next) {
-  Tasks.createTask(body)
-    .then(function (response) {
-      utils.writeJson(res, response);
-    })
-    .catch(function (response) {
-      utils.writeJson(res, response);
-    });
+  var task = req.body;
+  var ownerId = req.user;
+  Tasks.createTask(task, ownerId)
+      .then(function(response) {
+          utils.writeJson(res, response, 201);
+      })
+      .catch(function(response) {
+          utils.writeJson(res, { errors: [{ 'param': 'Server', 'msg': response }], }, 500);
+      });
 };
 
 module.exports.getAllPublicTasks = function getAllPublicTasks (req, res, next) {
-  console.log("getAllPublicTasks Controller called")
   var totalTasks = 0;
   var nextPage=0;
   Tasks.getPublicTasksTotal()
@@ -35,7 +36,7 @@ module.exports.getAllPublicTasks = function getAllPublicTasks (req, res, next) {
                 utils.writeJson(res, {
                   self: "/api/tasks/public?pageNumber=" + pageNumber,
                   totalPages: totalPages,
-                  pageNumber: pageNumber,
+                  currentPage: Number(pageNumber),
                   totalItems: totalTasks,
                   pageItems: response
                 });
@@ -43,7 +44,7 @@ module.exports.getAllPublicTasks = function getAllPublicTasks (req, res, next) {
                 utils.writeJson(res, {
                   self: "/api/tasks/public?pageNumber=" + pageNumber,
                   nextPage: "/api/tasks/public?pageNumber=" + nextPage,
-                  pageNumber: pageNumber,
+                  currentPage: Number(pageNumber),
                   totalPages: totalPages,
                   totalItems: totalTasks,
                   pageItems: response,
@@ -82,14 +83,14 @@ module.exports.getAllTasks = function getAllTasks (req, res, next) {
 
           if ( pageNumber == totalPages) utils.writeJson(res, { self: "/api/tasks?type=" + type + "&pageNumber=" + pageNumber,
                                                                 totalPages: totalPages,
-                                                                currentPage: pageNumber,
+                                                                currentPage: Number(pageNumber),
                                                                 totalItems: totalTasks,
                                                                 pageItems: response });
                                                             
           if ( pageNumber < totalPages) utils.writeJson(res, { self: "/api/tasks?type=" + type + "&pageNumber=" + pageNumber,
                                                                 nextPage: "/api/tasks?type=" + type + "&pageNumber=" + nextPage,
                                                                 totalPages: totalPages,
-                                                                currentPage: pageNumber,
+                                                                currentPage: Number(pageNumber),
                                                                 totalItems: totalTasks,
                                                                 pageItems: response });
         }).catch( (response) => {

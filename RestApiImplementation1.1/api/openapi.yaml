@@ -284,6 +284,16 @@ paths:
       summary: Get task assignees list
       operationId: getTaskAssignees
       parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of assignees list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
       - name: id
         in: path
         description: ID of a task
@@ -468,6 +478,17 @@ paths:
       description: Retrieve the available information (passwords excluded) about all
         the users.
       operationId: getAllUsers
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of users list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
       responses:
         "200":
           description: OK

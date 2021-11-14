@@ -45,5 +45,5 @@
             "format": "uri"
         }
     },
-    "required": ["id", "description"]
+    "required": ["description"]
 }

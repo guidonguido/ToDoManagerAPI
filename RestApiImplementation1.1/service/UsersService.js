@@ -1,5 +1,8 @@
 'use strict';
 
+const User = require("../components/user");
+const db = require('../components/db');
+var constants = require('../utils/constants.js');
 
 /**
  * Get information about the users
@@ -7,33 +10,59 @@
  *
  * returns Users
  **/
-exports.getAllUsers = function() {
-  return new Promise(function(resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-  "next" : "http://example.com/aeiou",
-  "pageNumber" : 6,
-  "totalPages" : 0,
-  "pageItems" : [ {
-    "password" : "password",
-    "name" : "name",
-    "self" : "http://example.com/aeiou",
-    "id" : 1,
-    "email" : "email"
-  }, {
-    "password" : "password",
-    "name" : "name",
-    "self" : "http://example.com/aeiou",
-    "id" : 1,
-    "email" : "email"
-  } ],
-  "self" : "http://example.com/aeiou"
-};
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
+exports.getAllUsers = function(pageNumber) {
+  return new Promise((resolve, reject) => {
+    var limits = getPagination(pageNumber);
+
+
+    var sql = "SELECT id, name, email FROM users";
+    
+    if (limits.length != 0) sql += " LIMIT ?,?";
+
+    console.log("sql" , sql)
+
+    db.all(sql, limits, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        let users = rows.map((row) => User.createUser(row));
+        resolve(users);
+      }
+    });
+
   });
 }
 
+/**
+ * Retrieve the number of users
+ * 
+ * Input: 
+ * Output:
+ * - total number of users
+ * 
+ **/
+ exports.getAllUsersTotal = function() {
+  return new Promise((resolve, reject) => {
+    const sqlNumOfUsers = "SELECT count(*) as total FROM users "
+    db.get(sqlNumOfUsers, [], (err, size) => {
+        if (err) {
+            reject(err);
+        } else {
+          resolve(size.total);
+        }
+    });
+  });
+}
+
+
+
+const getPagination = function(pageNumber) {
+  var size = constants.OFFSET;
+  var limits = [];
+  if (pageNumber == null) {
+    pageNumber = 1;
+  }
+  limits.push(size * (pageNumber - 1));
+  limits.push(size);
+  return limits;
+}
