@@ -1,26 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "http://dsp.polito.it/taskschema.json",
+    "$id": "http://dsp.polito.it/biblioschema_v2.json",
     "title": "Task",
     "additionalProperties": false,
-    "definitions": {
-        "projects": {
-            "type": "array",
-            "uniqueItems": true,
-            "items": {
-                "type": "string",
-                "enum": ["Personal", "WA1_Project", "WA2_Project", "DSP_Project"] 
-            },
-            "$comment": 
-                "the items keyword is used to validate all of the items in the array"
-        }
-    },
     "type": "object",
     "properties": {
-        "$schema": {
-            "type": "string",
-            "description": "path to the JSON Schema to use for the validation of the JSON file describing a Task"
-        },
         "id": { 
             "type": "integer", 
             "description": "unique identifier for the task" 
@@ -38,11 +22,10 @@
             "default": true,
             "description": "True if only the user who created it can get information about it, False if every user can get information about it" 
         },
-        "projects": { "$ref": "#definitions/projects"},
-        "images": {
-            "type": "array",
-            "uniqueItems": true,
-            "items": { "type": "integer" }
+        "project": { 
+            "type": "string",
+            "enum": ["Personal", "WA1_Project", "WA2_Project", "DSP_Project"],
+            "$comment": "the items keyword is used to validate all of the items in the array"
         },
         "deadline": { 
             "type": "string",
@@ -53,12 +36,14 @@
             "type": "boolean",
             "default": false
         },
-        "owner": { "type": "integer" },
+        "owner": { 
+            "type": "string",
+            "format": "uri" 
+        },
         "assignedTo": {
-            "type": "array",
-            "uniqueItems": true,
-            "items": { "type": "integer" }
+            "type": "string",
+            "format": "uri"
         }
     },
-    "required": ["id", "description"]
-  }
+    "required": ["description"]
+}

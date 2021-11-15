@@ -31,6 +31,14 @@
                     "description": "True if only the user who created it can get information about it, False if every user can get information about it" 
                 },
                 "project": { "$ref": "#definitions/projects"},
+                "images": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                },
                 "deadline": { 
                     "type": "string",
                     "format": "date-time",
@@ -45,8 +53,12 @@
                     "format": "uri" 
                 },
                 "assignedTo": {
-                    "type": "string",
-                    "format": "uri"
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "format": "uri"
+                    }
                 }
             },
             "required": ["id", "description"]

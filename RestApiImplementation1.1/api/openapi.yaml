@@ -1,0 +1,1032 @@
+openapi: 3.0.1
+info:
+  title: ToDo Manager
+  description: DSP-Lab-2
+  contact:
+    email: ricioppo.guido@gmail.com
+  license:
+    name: GPL 2.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
+  version: 1.0.0
+externalDocs:
+  description: More about DSP
+  url: https://didattica.polito.it/pls/portal30/gap.pkg_guide.viewGap?p_cod_ins=01TXZOV&p_a_acc=2021&p_header=S&p_lang=IT
+servers:
+- url: https://todomanager.dsp.io/v1
+- url: http://todomanager.dsp.io/v1
+tags:
+- name: task
+  description: Task resource
+- name: tasks
+  description: List of Task resource
+- name: assignees
+  description: List of User resource assigned to a task
+- name: users
+  description: Users resource
+- name: user
+  description: User resource
+- name: authenticator
+  description: Authenticator resource inhnerited from User resource
+- name: image
+  description: Image resource
+- name: imageFile
+  description: "Image file in png, jpg or gif format"
+- name: images
+  description: Images resource
+paths:
+  /api/tasks/public:
+    get:
+      tags:
+      - tasks
+      summary: Get all public tasks
+      operationId: getAllPublicTasks
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of tasks list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tasks'
+        "400":
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+                x-content-type: text/plain
+        "404":
+          description: Not found
+          content: {}
+      x-swagger-router-controller: Tasks
+  /api/tasks:
+    get:
+      tags:
+      - tasks
+      summary: Get all tasks. Either owner's private tasks or public
+      description: "Personalizing \"private\" and \"type\" query params, client decides\
+        \ to get all public tasks or only owned ones, providing identification"
+      operationId: getAllTasks
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of tasks list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: type
+        in: query
+        description: "If authenticated, filter type of tasks willing to retrieve"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            default: all
+            enum:
+            - assigned
+            - owned
+            - all
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tasks'
+        "401":
+          description: Unauthorized
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Tasks
+    post:
+      tags:
+      - tasks
+      summary: Create a task
+      operationId: createTask
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "400":
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+                x-content-type: text/plain
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Tasks
+  /api/tasks/{id}:
+    get:
+      tags:
+      - task
+      summary: Find task by ID
+      description: Returns a single task
+      operationId: getTaskById
+      parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "400":
+          description: Invalid ID supplied
+          content: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Task
+    put:
+      tags:
+      - task
+      summary: Updates a task
+      operationId: updateTask
+      parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+                x-content-type: text/plain
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Task
+    delete:
+      tags:
+      - task
+      summary: Deletes a task
+      operationId: deleteTask
+      parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Task
+    patch:
+      tags:
+      - task
+      summary: Updates "completed" field of a task
+      operationId: updateCompletedTask
+      parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Task
+  /api/tasks/{id}/assignees:
+    get:
+      tags:
+      - assignees
+      summary: Get task assignees list
+      operationId: getTaskAssignees
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of assignees list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Assignees
+    post:
+      tags:
+      - assignees
+      summary: Assign task to an existing user
+      operationId: addTaskAssignee
+      parameters:
+      - name: id
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: ID of an existing user
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int64
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "400":
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+                x-content-type: text/plain
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Assignees
+  /api/tasks/{taskId}/assignees/{userId}:
+    delete:
+      tags:
+      - assignees
+      summary: Remove task assignment from a user
+      operationId: removeTaskAssignee
+      parameters:
+      - name: taskId
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: userId
+        in: path
+        description: ID of an user
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Assignees
+  /api/users/authenticator:
+    post:
+      tags:
+      - authenticator
+      summary: Logs a user in or out
+      description: The user who wants to log in or out sends the user data to the
+        authenticator which performs the operation.
+      operationId: authenticateUser
+      parameters:
+      - name: type
+        in: query
+        description: The operation type ("login" or "logout")
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      requestBody:
+        description: "The data of the user who wants to perform log in or log out.\
+          \ For login the structure must contain email and password. For logout, the\
+          \ structure must contain the user id."
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        "204":
+          description: No Content
+          headers:
+            Set-Cookie:
+              style: simple
+              explode: false
+              schema:
+                type: string
+                example: token=jwtToken; Path=/; HttpOnly
+        "400":
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The reason for the bad request
+                x-content-type: text/plain
+        "401":
+          description: Unauthorized - Wrong password
+          content: {}
+        "404":
+          description: Not found - Wrong username
+          content: {}
+      x-swagger-router-controller: Authenticator
+  /api/users:
+    get:
+      tags:
+      - users
+      summary: Get information about the users
+      description: Retrieve the available information (passwords excluded) about all
+        the users.
+      operationId: getAllUsers
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of users list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Users
+  /api/users/{userId}:
+    get:
+      tags:
+      - user
+      summary: Get information about a user
+      description: Get user resource (password excluded) identified by userId
+      operationId: getUserById
+      parameters:
+      - name: userId
+        in: path
+        description: ID of the user to get
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "400":
+          description: Invalid ID supplied
+          content: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: User
+  /api/tasks/{taskId}/images:
+    get:
+      tags:
+      - images
+      summary: Get task images list
+      operationId: getTaskImages
+      parameters:
+      - name: pageNumber
+        in: query
+        description: Page number of images list
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: taskId
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: Accept
+        in: header
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - image/png
+          - image/gif
+          - image/jpg
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Images'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Assignees
+    post:
+      tags:
+      - images
+      summary: Associate an image to the task
+      description: Associate another image to the task identified by taskId
+      operationId: addImage
+      parameters:
+      - name: taskId
+        in: path
+        description: ID of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: image file to assign to the task
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/taskId_images_body'
+            encoding:
+              image:
+                contentType: "image/png, image/jpg, image/gif"
+                style: form
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Image'
+        "415":
+          description: Unsupported Media Type
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Images
+  /api/tasks/{taskId}/images/{imageId}:
+    get:
+      tags:
+      - image
+      summary: Retrieve an image data structure associated to the task
+      description: "Image resource, with uri pointing to image file"
+      operationId: getTaskImage
+      parameters:
+      - name: taskId
+        in: path
+        description: ID of a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: imageId
+        in: path
+        description: ID of an image
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Image'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Image
+    delete:
+      tags:
+      - image
+      summary: Delete an image associated to the task
+      operationId: deleteTaskImage
+      parameters:
+      - name: taskId
+        in: path
+        description: ID of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: imageId
+        in: path
+        description: ID of the image
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No Content
+          content: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Image
+  /api/tasks/{taskId}/images/{imageId}/imageFile:
+    get:
+      tags:
+      - imageFile
+      summary: Retrieve the file of an image associated to the task
+      description: The image file to be retrieved is linked to the image having the
+        ID specified in the path and it is associated to the task characterized by
+        the ID specified in the path.
+      operationId: getTaskImageFile
+      parameters:
+      - name: taskId
+        in: path
+        description: ID of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: imageId
+        in: path
+        description: ID of the image
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: Accept
+        in: header
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - image/png
+          - image/gif
+          - image/jpg
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                x-content-type: image/png
+            image/jpg:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+          content: {}
+        "414":
+          description: Unsupported Media Type
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: ImageFile
+components:
+  schemas:
+    Project:
+      type: string
+      enum:
+      - Personal
+      - WA1_Project
+      - WA2_Project
+      - DSP_Project
+    Task:
+      required:
+      - description
+      type: object
+      properties:
+        id:
+          type: integer
+          description: unique identifier for the task
+        description:
+          maxLength: 160
+          type: string
+        important:
+          type: boolean
+          default: false
+        private:
+          type: boolean
+          description: "True if only the user who created it can get information about\
+            \ it, False if every user can get information about it"
+          default: true
+        project:
+          $ref: '#/components/schemas/Project'
+        deadline:
+          pattern: "^(2[1-9][0-9]{2}|20[2-9][0-9]|[3-9][0-9]{3})"
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+          default: false
+        owner:
+          type: string
+          format: uri
+        assignedTo:
+          type: array
+          items:
+            type: string
+            format: uri
+        self:
+          type: string
+          format: uri
+      example:
+        important: false
+        owner: http://example.com/aeiou
+        private: true
+        description: description
+        project: Personal
+        self: http://example.com/aeiou
+        id: 0
+        completed: false
+        deadline: 2000-01-23T04:56:07.000+00:00
+        assignedTo:
+        - http://example.com/aeiou
+        - http://example.com/aeiou
+    Tasks:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        pageNumber:
+          type: integer
+        pageItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        totalItems:
+          type: integer
+        next:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+      example:
+        next: http://example.com/aeiou
+        pageNumber: 6
+        totalPages: 0
+        pageItems:
+        - important: false
+          owner: http://example.com/aeiou
+          private: true
+          description: description
+          project: Personal
+          self: http://example.com/aeiou
+          id: 1
+          completed: false
+          deadline: {}
+          assignedTo: http://example.com/aeiou
+        - important: false
+          owner: http://example.com/aeiou
+          private: true
+          description: description
+          project: Personal
+          self: http://example.com/aeiou
+          id: 1
+          completed: false
+          deadline: {}
+          assignedTo: http://example.com/aeiou
+        self: http://example.com/aeiou
+    User:
+      required:
+      - email
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          maxLength: 20
+          minLength: 6
+          type: string
+        self:
+          type: string
+          format: uri
+      example:
+        password: password
+        name: name
+        self: http://example.com/aeiou
+        id: 1
+        email: email
+    Users:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        pageNumber:
+          type: integer
+        pageItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        next:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+      example:
+        next: http://example.com/aeiou
+        pageNumber: 6
+        totalPages: 0
+        pageItems:
+        - password: password
+          name: name
+          self: http://example.com/aeiou
+          id: 1
+          email: email
+        - password: password
+          name: name
+          self: http://example.com/aeiou
+          id: 1
+          email: email
+        self: http://example.com/aeiou
+    Image:
+      required:
+      - name
+      - id
+      type: object
+      properties:
+        $schema:
+          type: string
+          description: path to the JSON Schema to use for the validation of the JSON
+            file describing an Image
+        id:
+          type: integer
+        name:
+          type: string
+          description: "name of the file containing the image, without the extension"
+        fileURI:
+          type: string
+          description: link to the image file
+          format: uri-reference
+        self:
+          type: string
+          description: self link
+          format: uri-reference
+      example:
+        $schema: $schema
+        name: name
+        fileURI: fileURI
+        self: self
+        id: 1
+    Images:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        pageNumber:
+          type: integer
+        pageItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        next:
+          type: string
+          format: uri
+        self:
+          type: string
+          format: uri
+      example:
+        next: http://example.com/aeiou
+        pageNumber: 6
+        totalPages: 0
+        pageItems:
+        - $schema: $schema
+          name: name
+          fileURI: fileURI
+          self: self
+          id: 1
+        - $schema: $schema
+          name: name
+          fileURI: fileURI
+          self: self
+          id: 1
+        self: http://example.com/aeiou
+    taskId_images_body:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      description: JWT identifying user session
+      name: JWT.token
+      in: cookie

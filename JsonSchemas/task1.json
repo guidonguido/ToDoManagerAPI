@@ -5,6 +5,6 @@
     "important": false,
     "projects": ["DSP_Project","WA2_Project"],
     "deadline": "2920-11-13T20:20:39+00:00",
-    "assignedTo": 1,
+    "assignedTo": [1],
     "owner": 1
  }

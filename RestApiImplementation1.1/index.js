@@ -11,10 +11,14 @@ var serverPort = 3000;
 
 var tasksController = require(path.join(__dirname, 'controllers/Tasks'));
 var taskController = require(path.join(__dirname, 'controllers/Task'));
-var authenticationController = require(path.join(__dirname, 'controllers/Authentication'));
+var authenticatorController = require(path.join(__dirname, 'controllers/Authenticator'));
 var assigneesController = require(path.join(__dirname,"controllers/Assignees"));
 var usersController = require(path.join(__dirname, 'controllers/Users'));
 var userController = require(path.join(__dirname, 'controllers/User'));
+var imageController = require(path.join(__dirname, 'controllers/Image'));
+var imageFileController = require(path.join(__dirname, 'controllers/ImageFile'));
+var imagesController = require(path.join(__dirname, 'controllers/Images'));
+
 
 // swaggerRouter configuration
 var options = {
@@ -27,6 +31,7 @@ var app = expressAppConfig.getApp();
 // Set validator middleware
 var taskSchema = JSON.parse(fs.readFileSync(path.join('.', 'json_schemas', 'taskschema_rest.json')).toString());
 var userSchema = JSON.parse(fs.readFileSync(path.join('.', 'json_schemas', 'userschema_rest.json')).toString());
+var imageSchema = JSON.parse(fs.readFileSync(path.join('.', 'json_schemas', 'imageschema_rest.json')).toString());
 var validator = new Validator({ allErrors: true });
 validator.ajv.addSchema([userSchema, taskSchema]);
 var validate = validator.validate;
@@ -64,10 +69,9 @@ const authMiddleware = function (req, res, next) {
     })(req, res, next);
 }
 
-// Route Methods
+// Route Methods Basics
 app.get('/api/tasks/public', tasksController.getAllPublicTasks); // Implemented 
-app.post('/api/signin', authenticationController.authenticateUser); // Implemented TODO REMOVE
-app.post('/api/logout', authMiddleware, validate({body: userSchema}), authenticationController.logoutUser); // Implemented  TODO REMOVE
+app.post('/api/users/authenticator', authenticatorController.authenticateUser); // Implemented
 app.get('/api/tasks', authMiddleware, tasksController.getAllTasks); // Implemented
 app.post('/api/tasks', authMiddleware, validate({body: taskSchema}), tasksController.createTask); // Implemented
 app.get('/api/tasks/:taskId', authMiddleware, taskController.getTaskById); // Implemented
@@ -79,6 +83,15 @@ app.post('/api/tasks/:taskId/assignees', authMiddleware, validate({body: userSch
 app.delete('/api/tasks/:taskId/assignees/:userId', authMiddleware, assigneesController.removeTaskAssignee); // Implemented
 app.get('/api/users', authMiddleware, usersController.getAllUsers); // Implemented
 app.get('/api/users/:userId', authMiddleware, userController.getUserById); // Implemented
+
+// Route Methods for Image resources
+app.get('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, imagesController.getTaskImages);
+app.post('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, validate({body: imageSchema}), imagesController.addImage);
+app.get('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.getTaskImage);
+app.delete('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.deleteTaskImage);
+app.get('/api/tasks/:taskId/images/:imageId/imageFile', authMiddleware, imageFileController.getTaskImageFile);
+
+
 
 
 // Error handlers for validation and authentication errors

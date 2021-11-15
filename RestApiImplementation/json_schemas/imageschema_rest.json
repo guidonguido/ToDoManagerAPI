@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://dsp.polito.it/imageschema_rest.json",
+    "title": "Image",
+    "additionalProperties": false,
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "path to the JSON Schema to use for the validation of the JSON file describing an Image"
+        },
+        "id": { "type": "integer" },
+        "name": {
+            "type": "string",
+            "description": "name of the file containing the image, without the extension"
+        },
+        "fileURI": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "link to the image file"
+        },
+        "self": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "self link"
+        }
+    },
+    "required": ["id", "description"]
+}
+    
