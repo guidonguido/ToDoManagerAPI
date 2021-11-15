@@ -5,6 +5,8 @@ var http = require('http');
 var fs = require("fs");
 var passport = require('passport');
 var { Validator, ValidationError } = require('express-json-validator-middleware');
+var storage = require(path.join(__dirname, './utils/storage'));
+
 
 var oas3Tools = require('oas3-tools');
 var serverPort = 3000;
@@ -71,7 +73,7 @@ const authMiddleware = function (req, res, next) {
 
 // Route Methods Basics
 app.get('/api/tasks/public', tasksController.getAllPublicTasks); // Implemented 
-app.post('/api/users/authenticator', authenticatorController.authenticateUser); // Implemented
+app.post('/api/users/authenticator', authenticatorController.authenticateUser); // Implemented TODO Test
 app.get('/api/tasks', authMiddleware, tasksController.getAllTasks); // Implemented
 app.post('/api/tasks', authMiddleware, validate({body: taskSchema}), tasksController.createTask); // Implemented
 app.get('/api/tasks/:taskId', authMiddleware, taskController.getTaskById); // Implemented
@@ -85,8 +87,8 @@ app.get('/api/users', authMiddleware, usersController.getAllUsers); // Implement
 app.get('/api/users/:userId', authMiddleware, userController.getUserById); // Implemented
 
 // Route Methods for Image resources
-app.get('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, imagesController.getTaskImages);
-app.post('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, validate({body: imageSchema}), imagesController.addImage);
+app.get('/api/tasks/:taskId/images', authMiddleware, imagesController.getTaskImages);
+app.post('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, validate({body: imageSchema}), imagesController.addImage); // TODO Test
 app.get('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.getTaskImage);
 app.delete('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.deleteTaskImage);
 app.get('/api/tasks/:taskId/images/:imageId/imageFile', authMiddleware, imageFileController.getTaskImageFile);
