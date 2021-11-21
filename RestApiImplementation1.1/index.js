@@ -73,7 +73,7 @@ const authMiddleware = function (req, res, next) {
 
 // Route Methods Basics
 app.get('/api/tasks/public', tasksController.getAllPublicTasks); // Implemented 
-app.post('/api/users/authenticator', authenticatorController.authenticateUser); // Implemented TODO Test
+app.post('/api/users/authenticator', authenticatorController.authenticateUser); // Implemented
 app.get('/api/tasks', authMiddleware, tasksController.getAllTasks); // Implemented
 app.post('/api/tasks', authMiddleware, validate({body: taskSchema}), tasksController.createTask); // Implemented
 app.get('/api/tasks/:taskId', authMiddleware, taskController.getTaskById); // Implemented
@@ -87,11 +87,11 @@ app.get('/api/users', authMiddleware, usersController.getAllUsers); // Implement
 app.get('/api/users/:userId', authMiddleware, userController.getUserById); // Implemented
 
 // Route Methods for Image resources
-app.get('/api/tasks/:taskId/images', authMiddleware, imagesController.getTaskImages);
-app.post('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, validate({body: imageSchema}), imagesController.addImage); // TODO Test
-app.get('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.getTaskImage);
-app.delete('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.deleteTaskImage);
-app.get('/api/tasks/:taskId/images/:imageId/imageFile', authMiddleware, imageFileController.getTaskImageFile);
+app.get('/api/tasks/:taskId/images', authMiddleware, imagesController.getTaskImages); // Implemented
+app.post('/api/tasks/:taskId/images', authMiddleware, storage.uploadImg, imagesController.addImage); // Implemented
+app.get('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.getTaskImage); // Implemented
+app.delete('/api/tasks/:taskId/images/:imageId', authMiddleware, imageController.deleteTaskImage); // Implemented
+app.get('/api/tasks/:taskId/images/:imageId/imageFile', authMiddleware, imageFileController.getTaskImageFile); // TODO Complete converter grpc client
 
 
 
@@ -117,3 +117,5 @@ http.createServer(app).listen(serverPort, function() {
     console.log('Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort);
     console.log('Swagger-ui is available on http://localhost:%d/docs', serverPort);
 });
+
+// TODO if totalPages==0, return a proper page instead of 404

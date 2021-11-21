@@ -562,17 +562,6 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: Accept
-        in: header
-        required: false
-        style: simple
-        explode: false
-        schema:
-          type: string
-          enum:
-          - image/png
-          - image/gif
-          - image/jpg
       responses:
         "200":
           description: OK
@@ -971,7 +960,7 @@ components:
         name:
           type: string
           description: "name of the file containing the image, without the extension"
-        fileURI:
+        imageFile:
           type: string
           description: link to the image file
           format: uri-reference
@@ -982,7 +971,7 @@ components:
       example:
         $schema: $schema
         name: name
-        fileURI: fileURI
+        imageFile: imageFileURI
         self: self
         id: 1
     Images:

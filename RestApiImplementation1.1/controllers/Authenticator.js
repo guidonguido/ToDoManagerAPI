@@ -1,7 +1,6 @@
 'use strict';
 
 var utils = require('../utils/writer.js');
-var Authenticator = require('../service/AuthenticatorService');
 var User = require("../service/UserService");
 const bcrypt = require('bcrypt')
 const jsonwebtoken = require('jsonwebtoken')
