@@ -38,7 +38,6 @@ exports.getTaskImageFile = function(userId, taskId, imageId, format) {
             // find imageFile on uploaded files
             var pathFile = './uploads/' + imageName + '.' +format;
             if (fs.existsSync(pathFile)) {
-              console.log("pathFile ", pathFile)
               resolve(pathFile);
             } else {
               // find imageFile format saved on uploaded files
