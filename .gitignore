@@ -7,6 +7,9 @@ node_modules
 
 package-lock.json
 
+#grpc server stub
+JavaServer/target
+
 # testing
 coverage
 
