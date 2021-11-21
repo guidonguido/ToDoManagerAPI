@@ -52,7 +52,6 @@ module.exports.updateCompletedTask = function updateCompletedTask (req, res, nex
   const userId = req.user
   const taskId = req.params.taskId
   const completed = req.body.completed
-  console.log(completed)
   
   if( completed === null ) utils.writeJson(res, { errors: [{ 'param': 'Server', 'msg': "Completed field missing" }], }, 500);
 

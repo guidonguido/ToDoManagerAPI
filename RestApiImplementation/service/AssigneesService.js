@@ -25,7 +25,6 @@ exports.addTaskAssignee = function(assigneeId, taskId, userId) {
         }
         else {
             const sql2 = 'INSERT INTO assignments(task, user) VALUES(?,?)';
-            console.log("ass", assigneeId, "tsk", taskId)
             db.run(sql2, [taskId, assigneeId], function(err) {
                 if (err) {
                     reject(err);
@@ -65,13 +64,8 @@ exports.getTaskAssignees = function(userId, taskId, pageNumber) {
           var sql2 = "SELECT u.id , u.name, u.email FROM assignments a, users u WHERE a.task=? and a.user = u.id";
           
           if (limits.length != 0) sql2 += " LIMIT ?,?";
-          
           limits.unshift(taskId);
-
-          console.log("sql" , sql2)
-
           db.all(sql2, limits, (err, rows) => {
-            console.log("rows" , rows)
 
             if (err) {
               reject(err);
@@ -110,7 +104,6 @@ exports.getTaskAssignees = function(userId, taskId, pageNumber) {
       } else{
         const sql2 = `SELECT count(*) as total FROM assignments a WHERE a.task = ?`;
         db.get(sql2, [taskId], (err, size) => {
-          console.log(size)
           if (err) {
             reject(err);
           } else {

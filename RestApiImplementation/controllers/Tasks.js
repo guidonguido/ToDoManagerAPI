@@ -78,8 +78,6 @@ module.exports.getAllTasks = function getAllTasks (req, res, next) {
         .then( (response) => {
           const nextPage = Number(pageNumber) + 1;
 
-          console.log("response = ", response)
-
 
           if ( pageNumber == totalPages) utils.writeJson(res, { self: "/api/tasks?type=" + type + "&pageNumber=" + pageNumber,
                                                                 totalPages: totalPages,

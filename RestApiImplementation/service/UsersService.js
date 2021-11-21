@@ -13,14 +13,8 @@ var constants = require('../utils/constants.js');
 exports.getAllUsers = function(pageNumber) {
   return new Promise((resolve, reject) => {
     var limits = getPagination(pageNumber);
-
-
     var sql = "SELECT id, name, email FROM users";
-    
     if (limits.length != 0) sql += " LIMIT ?,?";
-
-    console.log("sql" , sql)
-
     db.all(sql, limits, (err, rows) => {
       if (err) {
         reject(err);

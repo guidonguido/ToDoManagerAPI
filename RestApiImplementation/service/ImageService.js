@@ -87,7 +87,6 @@ exports.getTaskImage = function(userId, taskId, imageId) {
                         WHERE a.task = t.id AND t.id = ? AND (
                               t.owner = ? OR a.user = ?) `
         db.get(sql2, [taskId, userId, userId], (err, size) => {
-          console.log(size)
           if (err) {
             reject(err);
           } else if( rows[0].total == 0 ) {

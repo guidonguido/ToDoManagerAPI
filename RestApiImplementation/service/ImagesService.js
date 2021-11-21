@@ -74,7 +74,6 @@ exports.getTaskImages = function(userId, taskId, pageNumber) {
                         WHERE a.task = t.id AND t.id = ? AND (
                               t.owner = ? OR a.user = ?) `
         db.get(sql2, [taskId, userId, userId], (err, size) => {
-          console.log(size)
           if (err) {
             reject(err);
           } else if( rows[0].total == 0 ) {
@@ -85,14 +84,8 @@ exports.getTaskImages = function(userId, taskId, pageNumber) {
             var sql3 = "SELECT i.id , i.name, i.task FROM images i WHERE i.task = ?";
             
             if (limits.length != 0) sql3 += " LIMIT ?,?";
-            
             limits.unshift(taskId);
-
-            console.log("sql" , sql3)
-
             db.all(sql3, limits, (err, rows) => {
-              console.log("rows" , rows)
-
               if (err) {
                 reject(err);
               } else {

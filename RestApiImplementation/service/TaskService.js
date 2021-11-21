@@ -179,8 +179,6 @@ exports.updateTask = function(userId, taskId,task) {
                   }
                   sql3 = sql3.concat(' WHERE id = ?');
                   parameters.push(taskId);
-                  console.log("sql3 = ", sql3)
-                  console.log("parameters = ", parameters)
                   db.run(sql3, parameters, function(err) {
                       if (err) {
                           reject(err);
